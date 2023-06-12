@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns'
 import { Metadata } from 'next'
 import { getMDXComponent } from 'next-contentlayer/hooks'
 
-type props = {
+interface IProps {
   params: { slug: string }
   searchparams: { [key: string]: string | string[] | undefined }
 }
@@ -12,7 +12,7 @@ type props = {
 export const generateStaticParams = async () =>
   allPosts.map((post: Post) => ({ slug: post._raw.flattenedPath }))
 
-export const generateMetadata = ({ params }: props): Metadata => {
+export const generateMetadata = ({ params }: IProps): Metadata => {
   const post = allPosts.find(
     (post: Post) => post._raw.flattenedPath === params.slug
   )
