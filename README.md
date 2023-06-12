@@ -26,15 +26,47 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
 
-## dep
+## Tech stacks
 
-- next-themes
-- clsn
+- Next.js
+  - version: 13.4
+  - app routers
+  - react server components
+- Tailwindcss
+  - tailwindcss-animate
+  - @tailwindcss/forms
+  - @tailwindcss/typography
+  - tailwind-merge
+- Contentlayer
 
-- @fec/remark-a11y-emoji
-- next-mdx-remote
-- rehype-autolink-headings
-- rehype-slug
-- remark-frontmatter
-- remark-gfm
-- remark-toc
+## Features
+
+### Basic
+
+- [x] contentlayer and custom components
+- [ ] next-themes and dark mode
+- [ ] next fonts
+- [ ] error.js, loading.js, layout.js, template.js
+- [ ] SEO and metadata
+- [ ] t30ss/t3-env
+- [ ] vercel analyze
+
+#### Hero section
+
+- [ ] typewriter
+- [ ] motion design: while in view
+- [ ] paradox scroll effect
+- [ ] snap scroll
+
+#### Posts
+
+- [ ] heading navigation
+- [ ] reading progression
+
+### Remote resources
+
+**Options:**
+
+1. Notion
+2. Supabase
+3. PlanetScale and Prisma

@@ -28,13 +28,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
     (post: Post) => post._raw.flattenedPath === params.slug
   )
 
-  let MDXContent
-
-  if (!post) {
-    return <PageNotFound />
-  } else {
-    MDXContent = getMDXComponent(post!.body.code)
-  }
+  if (!post) return <PageNotFound />
 
   return (
     <div className='max-w-[100vw] h-screen flex justify-center'>
@@ -48,7 +42,7 @@ const PostPage = ({ params }: { params: { slug: string } }) => {
             {post.title}
           </h1>
           <article>
-            <MDXContent components={{ ...MDXComponents }} />
+            <MDXComponents code={post.body.code} />
           </article>
         </div>
       </div>

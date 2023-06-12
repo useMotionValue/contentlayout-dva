@@ -4,7 +4,7 @@ import { rehypeAccessibleEmojis } from 'rehype-accessible-emojis'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
-import { rehypeoptions } from './rephye-options'
+import { readFileSync } from 'fs'
 
 const Post = defineDocumentType(() => ({
   name: 'Post',
@@ -40,6 +40,8 @@ const Post = defineDocumentType(() => ({
   }
 }))
 
+const themePath = './assets/themes/OneHunter-Vercel-color-theme.json'
+
 export default makeSource({
   contentDirPath: 'posts',
   documentTypes: [Post],
@@ -52,8 +54,9 @@ export default makeSource({
         rehypePrettyCode,
         {
           // Use one of Shiki's packaged themes
-          theme: 'github-dark',
-          keepBackground: true,
+          // theme: 'github-dark',
+          theme: JSON.parse(readFileSync(themePath, 'utf-8')),
+          keepBackground: false,
           onVisitLine(node: any) {
             // Prevent lines from collapsing in `display: grid` mode, and allow empty
             // lines to be copy/pasted
