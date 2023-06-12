@@ -1,20 +1,22 @@
-import { Header, Footer, PageNotFound, MDXComponents } from '@components'
+import { Header, PageNotFound, MDXComponents } from '@components'
 import { Post, allPosts } from 'contentlayer/generated'
 import { format, parseISO } from 'date-fns'
 import { Metadata } from 'next'
 import { getMDXComponent } from 'next-contentlayer/hooks'
 
-type Props = {
-  params: { slug: string }
-  searchparams: { [key: string]: string | string[] | undefined }
-}
+// type Props = {
+//   params: { slug: string }
+//   searchparams: { [key: string]: string | string[] | undefined }
+// }
 
 export const generateStaticParams = async () =>
   allPosts.map((post: Post) => ({ slug: post._raw.flattenedPath }))
 
 export const generateMetadata = async ({
   params
-}: Props): Promise<Metadata> => {
+}: {
+  params: { slug: string }
+}): Promise<Metadata> => {
   const post = allPosts.find(
     (post: Post) => post._raw.flattenedPath === params.slug
   )
