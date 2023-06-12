@@ -1,0 +1,1194 @@
+---
+title: t3 stack tutorial
+description: Learn how to build a blog app with Next.js tRRC Zod.
+date: 2023-4-5
+author: useMotionValue 
+---
+
+![intro image](https://images.unsplash.com/photo-1542370285-b8eb8317691c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1426&q=80)
+
+# T3 Stack
+
+## Zod
+
+[github-repo](https://github.com/colinhacks/zod)
+
+### Basic usage
+
+```typescript
+import { z } from "zod"
+
+// creating a schema for strings
+const mySchema = z.string()
+
+// parsing
+mySchema.parse("tuna") // => "tuna"
+mySchema.parse(12) // => throws ZodError
+
+// "safe" parsing (doesn't throw error if validation fails)
+mySchema.safeParse("tuna") // => { success: true; data: "tuna" }
+mySchema.safeParse(12) // => { success: false; error: ZodError }
+```
+
+使用`safeParse`方法做校验更安全。
+
+对象类型的 shcema：
+
+```typescript
+const User = z.object({
+  username: z.string()
+})
+
+User.parse({ username: "Ludwig" })
+```
+
+可以通过`z.infer`获得 typescript 的类型：`type User = z.infer<typeof User>`
+
+### Optionals
+
+通过`z.optional()`来将 schema 变成可选的：
+
+```typescript
+const schema = z.optional(z.string())
+
+schema.parse(undefined) // => returns undefined
+type A = z.infer<typeof schema> // string | undefined
+```
+
+或者：
+
+```typescript
+const user = z.object({
+  username: z.string().optional()
+})
+type C = z.infer<typeof user> // { username?: string | undefined };
+```
+
+可以使用`.upwrap()`方法来取消可选：
+
+```typescript
+const stringSchema = z.string()
+const optionalString = stringSchema.optional()
+optionalString.unwrap() === stringSchema // true
+```
+
+### Coercion
+
+> 这里先介绍一下`coerce`和`coecrion`
+
+#### coerce 和 coecrion
+
+coerce"和"coercion"是英语中的两个
+术语，表示将一种类型或值转换为另-
+种类型或值的过程。
+"coerce "通常指将一个值或变量从一种
+类型转换为另一种类型，这种转换通常
+是由编程语言或计算机系统自动执行
+的。例如，在 Javascript 中，当一个字
+符串与一个数字相加时，Javascript 会
+自动将字符串转换为数字类型，这个过
+程就可以称为"coerce"
+"coercion "则表示执行"coerce"过程的
+结果或效果。例如，在 JavaScript 中
+当一个字符串与一个数字相加时，
+JavaScript 会自动将字符串转换为数字
+类型，这个转换的结果就可以称
+为"coercion".
+总的来说，"coerce"和"coercion"这两
+个术语都表示将一种类型或值转换为另
+一种类型或值的过程，只是一个表示过
+稈一个表示结果。
+
+#### coecrion 和 type casting 的区别
+
+"coercion"和"type
+casting"都表示将一个值从一种类型转
+换为另一种类型的过程，但是它们的实
+现方式和语义略有不同
+"Coercion"是指将一个值从一种类型转
+换为另一种类型的过程，这个过程通常
+是由程序自动执行的。在这个过程中
+程序会尝试根据上下文和类型之间的关
+系来确定如何进行转换。例如，在
+Javascript 中，当一个字符串与一个数
+字相加时，程序会自动将字符串转换为
+数字类型，这个过程就是"coercion"
+"Type casting"则是指将一个值从一种
+类型转换为另一种类型的显式操作，这
+个操作通常由程序员显式地编写代码来
+实现。在这个过程中，程序员需要指定
+要转换的类型和转换的方式。例如，在
+Java 中，可以使用强制类型转换操作符
+将一个数字类型转换为整型，这个操作
+就是"type casting"
+总的来说，
+"coercion"和"type
+casting"都表示将一个值从一种类型转
+换为另一种类型的过程，但
+是"coercion"通常是自动执行的
+而"type casting"则是由程序员显式编写
+的操作。此外，由于"coercion"是自动
+执行的，可能会导致一些意外的问题，
+因此程序员需要注意类型之间的关系和转换的过程。
+
+#### Zod 中的 coecrion
+
+```typescript
+const schema = z.coerce.string()
+schema.parse("tuna") // => "tuna"
+schema.parse(12) // => "12"
+schema.parse(true) // => "true"
+```
+
+coercing 之后的数据为`ZodString`,可以使用`z.string()`的方法：`z.coerce.string().email().min(5);`
+
+### Literals
+
+> `Literals`即字面量类型，简单而直接地表示特定的值。
+
+```typescript
+const tuna = z.literal("tuna")
+const twelve = z.literal(12)
+const twobig = z.literal(2n) // bigint literal
+const tru = z.literal(true)
+
+const terrificSymbol = Symbol("terrific")
+const terrific = z.literal(terrificSymbol)
+
+// retrieve literal value
+tuna.value // "tuna"
+```
+
+### String
+
+`z.string()`有许多好用的校验，如 uuid, regex，ip，email 等：
+
+```typescript
+// validations
+z.string().max(5)
+z.string().min(5)
+z.string().length(5)
+z.string().email()
+z.string().url()
+z.string().emoji()
+z.string().uuid()
+z.string().cuid()
+z.string().cuid2()
+z.string().ulid()
+z.string().regex(regex)
+z.string().includes(string)
+z.string().startsWith(string)
+z.string().endsWith(string)
+z.string().datetime() // defaults to UTC, see below for options
+z.string().ip() // defaults to IPv4 and IPv6, see below for options
+
+// transformations
+z.string().trim() // trim whitespace
+z.string().toLowerCase() // toLowerCase
+z.string().toUpperCase() // toUpperCase
+```
+
+在创建`string schema`时，可以自定义`error messages`
+
+```typescript
+const name = z.string({
+  required_error: "Name is required",
+  invalid_type_error: "Name must be a string"
+})
+```
+
+或者在使用校验方法时，通过传入参数的形式自定义校验`error messages`
+
+```typescript
+z.string().min(5, { message: "Must be 5 or more characters long" })
+z.string().max(5, { message: "Must be 5 or fewer characters long" })
+z.string().length(5, { message: "Must be exactly 5 characters long" })
+z.string().email({ message: "Invalid email address" })
+z.string().url({ message: "Invalid url" })
+z.string().emoji({ message: "Contains non-emoji characters" })
+z.string().uuid({ message: "Invalid UUID" })
+z.string().includes("tuna", { message: "Must include tuna" })
+z.string().startsWith("https://", { message: "Must provide secure URL" })
+z.string().endsWith(".com", { message: "Only .com domains allowed" })
+z.string().datetime({ message: "Invalid datetime string! Must be UTC." })
+z.string().ip({ message: "Invalid IP address" })
+```
+
+### Zod enums
+
+`z.enum`声明`string`类型的`enum schema`
+
+```typescript
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"])
+type FishEnum = z.infer<typeof FishEnum>
+// 'Salmon' | 'Tuna' | 'Trout'
+```
+
+或者使用 typesc 的 const 断言将字符串数组作为参数传入`z.enum`,`as const`将枚举值定义为字符串`tuple`元组
+
+```typescript
+const VALUES = ["Salmon", "Tuna", "Trout"] as const
+const FishEnum = z.enum(VALUES)
+```
+
+相对应地，可以将上述`z.enum`创建的`enum schema`转为数组：
+
+```typescript
+FishEnum.options // ["Salmon", "Tuna", "Trout"];
+```
+
+### Native enums
+
+用于校验第三方库的 enums 或者自己定义的 enums 等场景，可以使用`z.nativeEnum()`
+
+```typescript
+enum Fruits {
+  Apple = "apple",
+  Banana = "banana",
+  Cantaloupe // you can mix numerical and string enums
+}
+
+const FruitEnum = z.nativeEnum(Fruits)
+type FruitEnum = z.infer<typeof FruitEnum> // Fruits
+
+FruitEnum.parse(Fruits.Apple) // passes
+FruitEnum.parse(Fruits.Cantaloupe) // passes
+FruitEnum.parse("apple") // passes
+FruitEnum.parse("banana") // passes
+FruitEnum.parse(0) // passes
+FruitEnum.parse("Cantaloupe") // fails
+```
+
+## trpc
+
+### Quickstart
+
+#### backend
+
+initialize
+
+```typescript
+import { initTRPC } from "@trpc/server"
+/**
+ * Initialization of tRPC backend
+ * Should be done only once per backend!
+ */
+const t = initTRPC.create()
+/**
+ * Export reusable router and procedure helpers
+ * that can be used throughout the router
+ */
+export const router = t.router
+export const middleware = t.middleware
+export const publicProcedure = t.procedure
+```
+
+initialize router instance, 导出的`AppRouter` type 可以供 client 端用。
+
+```typescript
+import { router } from "./trpc"
+const appRouter = router({
+  // 聚合多个router
+  // 也可以写成：const appRouter = mergeRouters(userRouter, postRouter)
+  // ...
+})
+// Export type router type signature,
+// NOT the router itself.
+export type AppRouter = typeof appRouter
+```
+
+写一个 query 的接口：
+
+```typescript
+import { db } from "./db"
+import { publicProcedure, router } from "./trpc"
+const appRouter = router({
+  // 使用zod来限制参数类型
+  userList: publicProcedure.input(z.string()).query(async () => {
+    // Retrieve users from a datasource, this is an imaginary database
+    const users = await db.user.findMany()
+    return users
+  })
+})
+```
+
+写一个 mutation 接口：
+
+```typescript
+const appRouter = router({
+  // ...
+  userCreate: publicProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async opts => {
+      const { input } = opts
+      // Create a new user in the database
+      const user = await db.user.create(input)
+      return user
+    })
+})
+```
+
+启动后端服务：
+在我们定义了 server 端的 router 后，可以使用 trpc 提供的许多 [adapters](https://trpc.io/docs/server/adapters)，如为`express`提供的 `adapter`、`nextjs`提供的`adapter`
+
+这里使用`Standalone adapter`, 是 trpc server 的单独适配器，是搭建 app 最简单的方式。
+
+```typescript
+import { createHTTPServer } from "@trpc/server/adapters/standalone"
+const appRouter = router({
+  // ...
+})
+const server = createHTTPServer({
+  router: appRouter
+  // middleware: cors(),
+  // createContext() {},
+})
+server.listen(3000)
+```
+
+#### frontend
+
+导入后端定义的`AppRouter` type 并且作为泛型传给`createTRPCProxyClient`
+
+```typescript
+import { createTRPCProxyClient, httpBatchLink } from "@trpc/client"
+import type { AppRouter } from "./server"
+//     👆 **type-only** import
+// Pass AppRouter as generic here. 👇 This lets the `trpc` object know
+// what procedures are available on the server and their input/output types.
+const trpc = createTRPCProxyClient<AppRouter>({
+  links: [
+    httpBatchLink({
+      url: "http://localhost:3000"
+    })
+  ]
+})
+```
+
+Querying & Mutating
+
+```typescript
+// Inferred types
+const user = await trpc.userById.query("1")
+const createdUser = await trpc.userCreate.mutate({ name: "sachinraja" })
+```
+
+### Backend Advanced usage
+
+#### initialize
+
+`t`object 可以通过函数的链式调用来初始化：
+
+```typescript
+const t = initTRPC.context<Context>().meta<Meta>().create({
+  /* [...] */
+})
+
+#### RuntimeConfig
+export interface RuntimeConfig<TTypes extends RootConfigTypes> {
+  /**
+   * Use a data transformer
+   * @link https://trpc.io/docs/data-transformers
+   */
+  transformer: TTypes['transformer'];
+
+  /**
+   * Use custom error formatting
+   * @link https://trpc.io/docs/error-formatting
+   */
+  errorFormatter: ErrorFormatter<TTypes['ctx'], any>;
+
+  /**
+   * Allow `@trpc/server` to run in non-server environments
+   * @warning **Use with caution**, this should likely mainly be used within testing.
+   * @default false
+   */
+  allowOutsideOfServer: boolean;
+
+  /**
+   * Is this a server environment?
+   * @warning **Use with caution**, this should likely mainly be used within testing.
+   * @default typeof window === 'undefined' || 'Deno' in window || process.env.NODE_ENV === 'test'
+   */
+  isServer: boolean;
+
+  /**
+   * Is this development?
+   * Will be used to decide if the API should return stack traces
+   * @default process.env.NODE_ENV !== 'production'
+   */
+  isDev: boolean;
+}
+```
+
+#### Input & Output Validators
+
+##### Input merging
+
+可以在中间件利用一些 common input，使得`z.input()`可以堆叠以构建更复杂的类型。
+
+```typescript
+// 这个baseProcedure 为中间件,input的类型会被堆叠
+const baseProcedure = t.procedure
+  .input(z.object({ townName: z.string() }))
+  .use(opts => {
+    const input = opts.input
+    console.log(`Handling request with user from: ${input.townName}`)
+    return opts.next()
+  })
+
+export const appRouter = t.router({
+  hello: baseProcedure
+    .input(
+      z.object({
+        name: z.string()
+      })
+    )
+    .query(opts => {
+      const input = opts.input // input: {name: string, townName: stirng}
+      return {
+        greeting: `Hello ${input.name}, my friend from ${input.townName}`
+      }
+    })
+})
+```
+
+##### Output Validators
+
+```typescript
+export const appRouter = t.router({
+  hello: publicProcedure
+    .output(
+      z.object({
+        greeting: z.string()
+      })
+    )
+    .query(opts => {
+      return {
+        gre // 这里LSP会提示：greeting
+      }
+    })
+})
+```
+
+#### Context
+
+context 上下文保存了所有 tRPC 过程都可以访问的数据，是放置数据库连接或身份验证信息等内容的好地方。
+
+##### 定义 context 类型
+
+在使用`initTRPC`初始化时，在调用`.create()`前，使用`.context<TContext>()`和定义的 createContext 函数传递给`initTRPC`，来使得之后的`procedures`都能获得 context 的类型。
+
+```typescript
+import { initTRPC, type inferAsyncReturnType } from '@trpc/server';
+import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
+import { getSession } from 'next-auth/react';
+ 
+export const createContext = async (opts: CreateNextContextOptions) => {
+  const session = await getSession({ req: opts.req });
+ 
+  return {
+    session,
+  };
+};
+ 
+const t1 = initTRPC.context<typeof createContext>().create();
+t1.procedure.use(({ ctx }) => { ... });
+ 
+type Context = inferAsyncReturnType<typeof createContext>;
+const t2 = initTRPC.context<Context>().create();
+t2.procedure.use(({ ctx }) => { ... });
+```
+
+##### Inner and outer context
+
+在某些情况下，将 context 分成“内部”和“外部”函数可能是有意义的。
+
+内部 context 是您定义不依赖于请求的 context 的地方，例如数据库连接。您可以在集成测试或服务器端助手中使用此功能，在这些场景中没有请求对象。无论何时定义了什么内容都将始终可用于您的过程。
+
+外部 context 是您定义依赖于请求的 context 的地方，例如用户会话。在此处定义的任何内容仅适用于通过 HTTP 调用的过程。
+
+```typescript
+import type { inferAsyncReturnType } from "@trpc/server"
+import type { CreateNextContextOptions } from "@trpc/server/adapters/next"
+import { getSessionFromCookie, type Session } from "./auth"
+
+/**
+ * Defines your inner context shape.
+ * Add fields here that the inner context brings.
+ */
+interface CreateInnerContextOptions extends Partial<CreateNextContextOptions> {
+  session: Session | null
+}
+
+/**
+ * Inner context. Will always be available in your procedures, in contrast to the outer context.
+ *
+ * Also useful for:
+ * - testing, so you don't have to mock Next.js' `req`/`res`
+ * - tRPC's `createServerSideHelpers` where we don't have `req`/`res`
+ *
+ * @see https://trpc.io/docs/context#inner-and-outer-context
+ */
+export async function createContextInner(opts?: CreateInnerContextOptions) {
+  return {
+    prisma,
+    session: opts.session
+  }
+}
+
+/**
+ * Outer context. Used in the routers and will e.g. bring `req` & `res` to the context as "not `undefined`".
+ *
+ * @see https://trpc.io/docs/context#inner-and-outer-context
+ */
+export async function createContext(opts: CreateNextContextOptions) {
+  const session = getSessionFromCookie(opts.req)
+
+  const contextInner = await createContextInner({ session })
+
+  return {
+    ...contextInner,
+    req: opts.req,
+    res: opts.res
+  }
+}
+
+export type Context = inferAsyncReturnType<typeof createContextInner>
+
+// The usage in your router is the same as the example above.
+```
+
+#### Middlewares
+
+可以使用 `t.procedure.use()` 方法向过程添加中间件。这些中间件将包装 procedure 的调用，并必须传出其返回值。
+
+##### isAuthed protector middleware showcase
+
+```typescript
+// -------------------------------------------------
+// @filename: context.ts
+// -------------------------------------------------
+import type { inferAsyncReturnType } from "@trpc/server"
+import type { CreateNextContextOptions } from "@trpc/server/adapters/next"
+import { getSession } from "next-auth/react"
+/**
+ * Creates context for an incoming request
+ * @link https://trpc.io/docs/context
+ */
+export async function createContext(opts: CreateNextContextOptions) {
+  const session = await getSession({ req: opts.req })
+  return {
+    session
+  }
+}
+export type Context = inferAsyncReturnType<typeof createContext>
+// -------------------------------------------------
+// @filename: trpc.ts
+// -------------------------------------------------
+import { initTRPC, TRPCError } from "@trpc/server"
+import { Context } from "./context"
+const t = initTRPC.context<Context>().create()
+const isAuthed = t.middleware(({ next, ctx }) => {
+  if (!ctx.session?.user?.email) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED"
+    })
+  }
+  return next({
+    ctx: {
+      // Infers the `session` as non-nullable
+      session: ctx.session
+    }
+  })
+})
+export const middleware = t.middleware
+export const router = t.router
+/**
+ * Unprotected procedure
+ */
+export const publicProcedure = t.procedure
+/**
+ * Protected procedure
+ */
+export const protectedProcedure = t.procedure.use(isAuthed)
+```
+
+##### logger middleware showcase
+
+```typescript
+const loggerMiddleware = middleware(async opts => {
+  const start = Date.now()
+  const result = await opts.next()
+  const durationMs = Date.now() - start
+  const meta = { path: opts.path, type: opts.type, durationMs }
+  result.ok
+    ? console.log("OK request timing:", meta)
+    : console.error("Non-OK request timing", meta)
+  return result
+})
+export const loggedProcedure = publicProcedure.use(loggerMiddleware)
+```
+
+##### Context extension middleware
+
+Context Extension 可以让中间件以类型安全的方式动态地添加和覆盖基本程序 context 中的 key
+
+```typescript
+type Context = {
+  // user is nullable
+  user?: {
+    id: string
+  }
+}
+const isAuthed = middleware(opts => {
+  const { ctx } = opts
+  // `ctx.user` is nullable
+  if (!ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
+  return opts.next({
+    ctx: {
+      // ✅ user value is known to be non-null now
+      user: ctx.user
+    }
+  })
+})
+const protectedProcedure = publicProcedure.use(isAuthed)
+protectedProcedure.query(({ ctx }) => ctx.user)
+```
+
+##### Extending Middlewares
+
+使用`.pipe()`来 extend middleware
+
+```typescript
+const fooMiddleware = middleware(opts => {
+  return opts.next({
+    ctx: {
+      foo: "foo" as const
+    }
+  })
+})
+const barMiddleware = fooMiddleware.unstable_pipe(opts => {
+  const { ctx } = opts
+  ctx.foo
+  return opts.next({
+    ctx: {
+      bar: "bar" as const
+    }
+  })
+})
+const barProcedure = publicProcedure.use(barMiddleware)
+barProcedure.query(({ ctx }) => ctx.bar) // 这里ctx能拿到bar和foo
+```
+
+#### Next.js adapter
+
+在 nextjs 中使用 trpc，需要在目录`pages/api/trpc/[trpc].ts`中创建一个 API handler 文件:
+
+```typescript
+import { createNextApiHandler } from "@trpc/server/adapters/next"
+import { createContext } from "../../../server/trpc/context"
+import { appRouter } from "../../../server/trpc/router/_app"
+
+// @see https://nextjs.org/docs/api-routes/introduction
+export default createNextApiHandler({
+  router: appRouter,
+  createContext
+})
+```
+
+##### 处理 CORS 等
+
+```typescript
+import { createNextApiHandler } from "@trpc/server/adapters/next"
+import { createContext } from "../../../server/trpc/context"
+import { appRouter } from "../../../server/trpc/router/_app"
+
+// create the API handler, but don't return it yet
+const nextApiHandler = createNextApiHandler({
+  router: appRouter,
+  createContext
+})
+
+// @see https://nextjs.org/docs/api-routes/introduction
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  // We can use the response object to enable CORS
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Request-Method", "*")
+  res.setHeader("Access-Control-Allow-Methods", "OPTIONS, GET")
+  res.setHeader("Access-Control-Allow-Headers", "*")
+
+  // If you need to make authenticated CORS calls then
+  // remove what is above and uncomment the below code
+
+  // Allow-Origin has to be set to the requesting domain that you want to send the credentials back to
+  // res.setHeader('Access-Control-Allow-Origin', 'http://example:6006');
+  // res.setHeader('Access-Control-Request-Method', '*');
+  // res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
+  // res.setHeader('Access-Control-Allow-Headers', 'content-type');
+  // res.setHeader('Referrer-Policy', 'no-referrer');
+  // res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(200)
+    return res.end()
+  }
+
+  // finally pass the request on to the tRPC handler
+  return nextApiHandler(req, res)
+}
+```
+
+#### Server Side Calls
+
+当想要从托管 procedures 的同一个 server 内调用 procedure 时，可以使用`router.createCaller({})`, 第一个参数是 Context
+
+使用 caller 获取 query 结果：
+
+```typescript
+import { initTRPC } from "@trpc/server"
+import { z } from "zod"
+const t = initTRPC.create()
+const router = t.router({
+  // Create procedure at path 'greeting'
+  greeting: t.procedure
+    .input(z.object({ name: z.string() }))
+    .query(opts => `Hello ${opts.input.name}`)
+})
+const caller = router.createCaller({})
+const result = await caller.greeting({ name: "tRPC" })
+```
+
+在调用需要 context 值的 procedure 时，需要给 caller 传入参数。
+
+#### Authorization
+
+##### Create context from request headers
+
+```typescript
+import * as trpc from "@trpc/server"
+import { inferAsyncReturnType } from "@trpc/server"
+import * as trpcNext from "@trpc/server/adapters/next"
+import { decodeAndVerifyJwtToken } from "./somewhere/in/your/app/utils"
+
+export async function createContext({
+  req,
+  res
+}: trpcNext.CreateNextContextOptions) {
+  // Create your context based on the request object
+  // Will be available as `ctx` in all your resolvers
+
+  // This is just an example of something you might want to do in your ctx fn
+  async function getUserFromHeader() {
+    if (req.headers.authorization) {
+      const user = await decodeAndVerifyJwtToken(
+        req.headers.authorization.split(" ")[1]
+      )
+      return user
+    }
+    return null
+  }
+  const user = await getUserFromHeader()
+
+  return {
+    user
+  }
+}
+export type Context = inferAsyncReturnType<typeof createContext>
+```
+
+##### Option 1: Authorize using resolver
+
+```typescript
+import { TRPCError, initTRPC } from "@trpc/server"
+import type { Context } from "../context"
+
+export const t = initTRPC.context<Context>().create()
+
+const appRouter = t.router({
+  // open for anyone
+  hello: t.procedure
+    .input(z.string().nullish())
+    .query(opts => `hello ${opts.input ?? opts.ctx.user?.name ?? "world"}`),
+  // checked in resolver
+  secret: t.procedure.query(opts => {
+    if (!opts.ctx.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" })
+    }
+    return {
+      secret: "sauce"
+    }
+  })
+})
+```
+
+##### Option 2: Authorize using middleware
+
+```typescript
+import { TRPCError, initTRPC } from "@trpc/server"
+
+export const t = initTRPC.context<Context>().create()
+
+const isAuthed = t.middleware(opts => {
+  const { ctx } = opts
+  if (!ctx.user?.isAdmin) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
+  return opts.next({
+    ctx: {
+      user: ctx.user
+    }
+  })
+})
+
+// you can reuse this for any procedure
+export const protectedProcedure = t.procedure.use(isAuthed)
+
+t.router({
+  // this is accessible for everyone
+  hello: t.procedure
+    .input(z.string().nullish())
+    .query(opts => `hello ${opts.input ?? opts.ctx.user?.name ?? "world"}`),
+  admin: t.router({
+    // this is accessible only to admins
+    secret: protectedProcedure.query(opts => {
+      return {
+        secret: "sauce"
+      }
+    })
+  })
+})
+```
+
+#### Error Handling
+
+可以使用 trpc 提供的 hepler 函数：`getHTTPStatusCodeFromError`，得到对应的错误状态码：
+
+```typescript
+import { getHTTPStatusCodeFromError } from "@trpc/server/http"
+// Example error you might get if your input validation fails
+const error: TRPCError = {
+  name: "TRPCError",
+  code: "BAD_REQUEST",
+  message: '"password" must be at least 4 characters'
+}
+if (error instanceof TRPCError) {
+  const httpCode = getHTTPStatusCodeFromError(error)
+  console.log(httpCode) // 400
+}
+```
+
+可以通过`TRPCError`子类来抛出错误：
+
+```typescript
+import { TRPCError, initTRPC } from "@trpc/server"
+
+const t = initTRPC.create()
+
+const appRouter = t.router({
+  hello: t.procedure.query(() => {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "An unexpected error occurred, please try again later.",
+      // optional: pass the original error to retain stack trace
+      cause: theError
+    })
+  })
+})
+
+// [...]
+```
+
+#### Error formatting
+
+Adding custom formatting:
+
+```typescript
+import { initTRPC } from "@trpc/server"
+
+export const t = initTRPC.context<Context>().create({
+  errorFormatter(opts) {
+    const { shape, error } = opts
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.code === "BAD_REQUEST" && error.cause instanceof ZodError
+            ? error.cause.flatten()
+            : null
+      }
+    }
+  }
+})
+```
+
+#### MetaData
+
+> procedure metaData 可以为 procedure 添加特定的 meta 属性，这些属性将会出现在所有 middlewares 参数中。
+>
+> 使用场景比如下文 isAuthed middleware 中，如果 procedure 的 metaData 为 authRequired 才走这个 middleware 的判断。
+
+##### 创建 metaData
+
+创建带有 type 的 metadata：
+
+```typescript
+import { initTRPC } from "@trpc/server"
+
+// [...]
+
+interface Meta {
+  authRequired: boolean
+}
+
+export const t = initTRPC.context<Context>().meta<Meta>().create()
+
+export const appRouter = t.router({
+  // [...]
+})
+```
+
+routers:
+
+```typescript
+import { initTRPC } from "@trpc/server"
+
+// [...]
+
+interface Meta {
+  authRequired: boolean
+}
+
+export const t = initTRPC.context<Context>().meta<Meta>().create()
+
+const isAuthed = t.middleware(async opts => {
+  const { meta, next, ctx } = opts
+  // only check authorization if enabled
+  if (meta?.authRequired && !ctx.user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" })
+  }
+  return next()
+})
+
+export const authedProcedure = t.procedure.use(isAuthed)
+
+export const appRouter = t.router({
+  hello: authedProcedure.meta({ authRequired: false }).query(() => {
+    return {
+      greeting: "hello world"
+    }
+  }),
+  protectedHello: authedProcedure.meta({ authRequired: true }).query(() => {
+    return {
+      greeting: "hello-world"
+    }
+  })
+})
+```
+
+##### default metaData 和 mergin metaData
+
+```typescript
+import { initTRPC } from '@trpc/server';
+
+interface Meta {
+  authRequired: boolean;
+  role?: 'user' | 'admin'
+}
+
+export const t = initTRPC
+  .context<Context>()
+  .meta<Meta>()
+  .create({
+    // Set a default value
+    defaultMeta: { authRequired: false }
+  });
+
+const publicProcedure = t.procedure
+// ^ Default Meta: { authRequired: false }
+
+const authProcedure = publicProcedure
+  .use(authMiddleware)
+  .meta({
+    authRequired: true;
+    role: 'user'
+  });
+// ^ Meta: { authRequired: true, role: 'user' }
+
+const adminProcedure = authProcedure
+  .meta({
+    role: 'admin'
+  });
+// ^ Meta: { authRequired: true, role: 'admin' }
+```
+
+#### Response Caching
+
+详见[trpc docs](https://trpc.io/docs/server/caching)
+原理是通过设置 responseMeta，让 vercel edge 来实现。
+
+```typescript
+import { inferAsyncReturnType, initTRPC } from "@trpc/server"
+import * as trpcNext from "@trpc/server/adapters/next"
+
+export const createContext = async ({
+  req,
+  res
+}: trpcNext.CreateNextContextOptions) => {
+  return {
+    req,
+    res,
+    prisma
+  }
+}
+
+type Context = inferAsyncReturnType<typeof createContext>
+
+export const t = initTRPC.context<Context>().create()
+
+const waitFor = async (ms: number) =>
+  new Promise(resolve => setTimeout(resolve, ms))
+
+export const appRouter = t.router({
+  public: t.router({
+    slowQueryCached: t.procedure.query(async opts => {
+      await waitFor(5000) // wait for 5s
+
+      return {
+        lastUpdated: new Date().toJSON()
+      }
+    })
+  })
+})
+
+// Exporting type _type_ AppRouter only exposes types that can be used for inference
+// https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export
+export type AppRouter = typeof appRouter
+
+// export API handler
+export default trpcNext.createNextApiHandler({
+  router: appRouter,
+  createContext,
+  responseMeta(opts) {
+    const { ctx, paths, errors, type } = opts
+    // assuming you have all your public routes with the keyword `public` in them
+    const allPublic = paths && paths.every(path => path.includes("public"))
+    // checking that no procedures errored
+    const allOk = errors.length === 0
+    // checking we're doing a query request
+    const isQuery = type === "query"
+
+    if (ctx?.res && allPublic && allOk && isQuery) {
+      // cache request for 1 day + revalidate once every second
+      const ONE_DAY_IN_SECONDS = 60 * 60 * 24
+      return {
+        headers: {
+          "cache-control": `s-maxage=1, stale-while-revalidate=${ONE_DAY_IN_SECONDS}`
+        }
+      }
+    }
+    return {}
+  }
+})
+```
+
+### Data Trainsformers
+
+> 序列化 response data 或 input args
+>
+> Data Trainsformers 需要被同时添加到 server 和 client
+
+#### 使用`superjson`
+
+> `superjson`可以序列化`Date`, `Map`, `Set`等。
+
+initTRPC:
+
+```typescript
+import { initTRPC } from "@trpc/server"
+import superjson from "superjson"
+
+export const t = initTRPC.create({
+  transformer: superjson
+})
+```
+
+在 nextjs client:
+
+createTRPCProxyClient():
+
+```typescript
+import { createTRPCProxyClient } from "@trpc/client"
+import superjson from "superjson"
+import type { AppRouter } from "~/server/routers/_app"
+
+export const client = createTRPCProxyClient<AppRouter>({
+  transformer: superjson // <--
+  // [...]
+})
+```
+
+createTRPCNext():
+
+```typescript
+// -------------------------------------------------
+// @filename: utils/trpc.ts
+// -------------------------------------------------
+import { createTRPCNext } from "@trpc/next"
+import superjson from "superjson"
+import type { AppRouter } from "~/server/routers/_app"
+
+// [...]
+
+export const trpc = createTRPCNext<AppRouter>({
+  config({ ctx }) {
+    return {
+      transformer: superjson // <--
+    }
+  }
+  // [...]
+})
+```
+
+### NextJS Integration
+
+目录结构：
+
+```
+.
+├── prisma # <-- if prisma is added
+│ └── [..]
+├── src
+│ ├── pages
+│ │ ├── \_app.tsx # <-- add `withTRPC()`-HOC here
+│ │ ├── api
+│ │ │ └── trpc
+│ │ │ └── [trpc].ts # <-- tRPC HTTP handler
+│ │ └── [..]
+│ ├── server
+│ │ ├── routers
+│ │ │ ├── \_app.ts # <-- main app router
+│ │ │ ├── post.ts # <-- sub routers
+│ │ │ └── [..]
+│ │ ├── context.ts # <-- create app context
+│ │ └── trpc.ts # <-- procedure helpers
+│ └── utils
+│ └── trpc.ts # <-- your typesafe tRPC hooks
+└── [..]
+```
+
+## NextAuth
+
+## prisma
+
+> [prisma.io](https://prisma.io)
+>
+> [prisma 中文文档](https://prisma.yoga)
+
+### ZenStack
