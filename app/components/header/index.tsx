@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
+import ThemeSwitcher from './theme-switcher'
 
 function Header() {
   return (
@@ -19,6 +20,7 @@ function Header() {
         />
         <h1 className='font-semibold ml-2  text-[1.800rem]'>BLOG</h1>
       </Link>
+      <ThemeSwitcher />
       <Link
         href='https://vercel.com'
         target='_blank'
