@@ -106,14 +106,14 @@ export default function Emoji({ label, emoji, ...props }: EmojiProps) {
 
 To be able to create usable components without style conflicts, I am using [`clsx`](https://github.com/lukeed/clsx) and [`tailwind-merge`](https://github.com/dcastil/tailwind-merge). You can do the same with your Tailwind CSS projects by creating a function as follows:
 
-<CodeTitle title="utils/clsxm.ts" lang="ts" />
+<CodeTitle title="utils/cn.ts" lang="ts" />
 
 ```ts
 import clsx, { ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 // Merge classes with tailwind-merge with clsx full feature
-export function clsxm(...classes: ClassValue[]) {
-  return twMerge(clsx(...classes))
+export function cn(cn: ClassValue[]) {
+  return twMerge(clsx(cn))
 }
 ```
 

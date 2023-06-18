@@ -54,6 +54,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 - [ ] SEO and metadata
 - [ ] t30ss/t3-env
 - [ ] vercel analyze
+- [ ] RSS
 
 #### Hero section
 
